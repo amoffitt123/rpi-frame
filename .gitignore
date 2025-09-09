@@ -1,0 +1,30 @@
+# Ignore uploaded and processed images
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.JPG
+uploads/*.JPEG
+uploads/*.PNG
+processed/*.jpg
+processed/*.jpeg
+processed/*.png
+processed/*.JPG
+processed/*.JPEG
+processed/*.PNG
+
+# Keep the directories but ignore contents
+!uploads/.gitkeep
+!processed/.gitkeep
+
+# Log files
+*.log
+flask.log
+slideshow.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
