@@ -154,23 +154,44 @@
             transform: scale(1.1);
         }
 
-        .delete-btn {
+        .image-controls {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: rgba(255, 107, 107, 0.9);
-            color: white;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .image-card:hover .image-controls {
+            opacity: 1;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
             border: none;
             border-radius: 50%;
             width: 30px;
             height: 30px;
             cursor: pointer;
-            opacity: 0;
+            font-size: 14px;
             transition: all 0.3s ease;
         }
 
-        .image-card:hover .delete-btn {
-            opacity: 1;
+        .control-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .delete-btn {
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 107, 107, 1);
         }
 
         .image-info {
@@ -274,9 +295,17 @@
                 <div class="image-card">
                     <div class="image-container">
                         <img src="{{ image.url }}" alt="{{ image.filename }}" loading="lazy">
-                        <button class="delete-btn" onclick="deleteImage('{{ image.folder }}', '{{ image.filename }}')" title="Delete">
-                            ✕
-                        </button>
+                        <div class="image-controls">
+                            <button class="control-btn rotate-btn" onclick="rotateImage('{{ image.folder }}', '{{ image.filename }}', 'left')" title="Rotate Left">
+                                ↺
+                            </button>
+                            <button class="control-btn rotate-btn" onclick="rotateImage('{{ image.folder }}', '{{ image.filename }}', 'right')" title="Rotate Right">
+                                ↻
+                            </button>
+                            <button class="control-btn delete-btn" onclick="deleteImage('{{ image.folder }}', '{{ image.filename }}')" title="Delete">
+                                ✕
+                            </button>
+                        </div>
                     </div>
                     <div class="image-info">
                         <div class="image-name">{{ image.filename[:20] }}...</div>
@@ -353,6 +382,24 @@
             })
             .catch(error => {
                 showMessage('Upload failed: ' + error.message, 'error');
+            });
+        }
+
+        function rotateImage(folder, filename, direction) {
+            fetch(`/rotate/${folder}/${filename}/${direction}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Image rotated! 🔄', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showMessage(data.error || 'Rotation failed', 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Rotation failed: ' + error.message, 'error');
             });
         }
 

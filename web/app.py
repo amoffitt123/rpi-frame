@@ -54,7 +54,7 @@ def index():
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
-    """Handle file uploads"""
+    """Handle file uploads with auto-rotation"""
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
     
@@ -70,9 +70,28 @@ def upload_file():
             
             # Save and process image
             file.save(temp_path)
-            img = Image.open(temp_path).convert("RGB")
+            img = Image.open(temp_path)
+            
+            # Auto-rotate based on EXIF orientation
+            try:
+                from PIL.ExifTags import ORIENTATION
+                exif = img._getexif()
+                if exif is not None:
+                    orientation = exif.get(0x0112)  # Orientation tag
+                    if orientation == 3:
+                        img = img.rotate(180, expand=True)
+                    elif orientation == 6:
+                        img = img.rotate(270, expand=True)
+                    elif orientation == 8:
+                        img = img.rotate(90, expand=True)
+            except (AttributeError, KeyError, TypeError):
+                # No EXIF data or orientation info, continue without rotation
+                pass
+            
+            # Convert to RGB and save
+            img = img.convert("RGB")
             final_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
-            img.save(final_path, format="JPEG")
+            img.save(final_path, format="JPEG", quality=95)
             
             # Clean up temp file
             os.remove(temp_path)
@@ -87,6 +106,37 @@ def upload_file():
             return jsonify({"error": f"Image processing error: {e}"}), 500
     
     return jsonify({"error": "Invalid file type"}), 400
+
+@app.route("/rotate/<folder>/<filename>/<direction>", methods=["POST"])
+def rotate_image(folder, filename, direction):
+    """Rotate an image 90 degrees clockwise or counterclockwise"""
+    if folder not in ['uploads', 'processed']:
+        return jsonify({"error": "Invalid folder"}), 400
+    
+    if direction not in ['left', 'right']:
+        return jsonify({"error": "Invalid direction"}), 400
+    
+    folder_path = UPLOAD_FOLDER if folder == 'uploads' else PROCESSED_FOLDER
+    filepath = os.path.join(folder_path, filename)
+    
+    try:
+        if os.path.exists(filepath):
+            img = Image.open(filepath)
+            
+            # Rotate based on direction
+            if direction == 'right':
+                img = img.rotate(-90, expand=True)  # Clockwise
+            else:
+                img = img.rotate(90, expand=True)   # Counter-clockwise
+            
+            # Save the rotated image
+            img.save(filepath, format="JPEG", quality=95)
+            
+            return jsonify({"success": True, "message": "Image rotated successfully"})
+        else:
+            return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Rotation error: {e}"}), 500
 
 @app.route("/delete/<folder>/<filename>", methods=["DELETE"])
 def delete_file(folder, filename):
