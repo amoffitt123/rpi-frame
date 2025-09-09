@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claire's Photo Gallery!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-section {
+            padding: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #ff6b6b;
+            background: #fff0f0;
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .gallery-section {
+            padding: 30px;
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .gallery-header h2 {
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        .clear-all-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.1);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .image-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .image-info {
+            padding: 15px;
+        }
+
+        .image-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .image-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .status-message.show {
+            transform: translateX(0);
+        }
+
+        .status-message.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .status-message.error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .empty-gallery {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-gallery h3 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .upload-section, .gallery-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Claire's Photo Gallery!</h1>
+            <p>Upload memories to your picture frame</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <h3>📸 Upload Photos</h3>
+                <p>Drag and drop photos here or click to select</p>
+                <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose Photos
+                </button>
+            </div>
+        </div>
+
+        <div class="gallery-section">
+            <div class="gallery-header">
+                <h2>🖼️ Gallery ({{ images|length }} photos)</h2>
+                {% if images %}
+                <button class="clear-all-btn" onclick="clearAll()">
+                    🗑️ Clear All
+                </button>
+                {% endif %}
+            </div>
+
+            {% if images %}
+            <div class="gallery-grid">
+                {% for image in images %}
+                <div class="image-card">
+                    <div class="image-container">
+                        <img src="{{ image.url }}" alt="{{ image.filename }}" loading="lazy">
+                        <button class="delete-btn" onclick="deleteImage('{{ image.folder }}', '{{ image.filename }}')" title="Delete">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">{{ image.filename[:20] }}...</div>
+                        <div class="image-meta">
+                            📅 {{ image.modified }}<br>
+                            📂 {{ image.folder }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-gallery">
+                <h3>No photos yet!</h3>
+                <p>Upload some beautiful memories to get started 🌟</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="status-message" id="statusMessage"></div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    uploadFile(file);
+                }
+            });
+        }
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Upload successful! 🎉', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showMessage(data.error || 'Upload failed', 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Upload failed: ' + error.message, 'error');
+            });
+        }
+
+        function deleteImage(folder, filename) {
+            if (confirm('Are you sure you want to delete this photo?')) {
+                fetch(`/delete/${folder}/${filename}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage('Photo deleted! 🗑️', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showMessage(data.error || 'Delete failed', 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Delete failed: ' + error.message, 'error');
+                });
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to delete ALL photos? This cannot be undone!')) {
+                fetch('/clear-all', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message + ' 🧹', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showMessage(data.error || 'Clear failed', 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Clear failed: ' + error.message, 'error');
+                });
+            }
+        }
+
+        function showMessage(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type} show`;
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
